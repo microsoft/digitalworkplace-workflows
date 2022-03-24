@@ -1,14 +1,19 @@
-# Project
+# DigitalWorkplace Workflows
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+This repo provides a set of Github workflow templates to be used by Microsoft.DigitalWorkplace team for building, packing, signing and publishing NuGet package projects.
 
-As the maintainer of this project, please make a few updates:
+The templates take inputs and secrets as needed to run their defined behavior and stable_publish.yml workflow is the only one that assumes a Release environment, mainly for approval purposes.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+### build.yml
+runs the basic build steps and test steps and generates NuGet packages for the project specified in the input.
+
+### sign.yml
+communicates with ESRP (a Microsoft internal tool for signing NuGet packages) using their client and signs the packages in the artifacts folder - it assumes an `unsigned` artifacts folder that contains two folders: `beta` & `stable` for the corresponding .nupkg files. After signing the packages it uploads them to the `signed` artifacts folder with a similar hierarchy to the unsigned one.
+
+### beta_publish.yml and stable_publish.yml
+push the signed nupkg files to the public NuGet.org feed.
+
+
 
 ## Contributing
 
