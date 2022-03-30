@@ -34,7 +34,25 @@ jobs:
         dotnet-version: 6.0.x
 
     - name: Test
-      run: dotnet test --verbosity normal /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total
+      run: dotnet test /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$GITHUB_WORKSPACE/coverage.xml
+
+    - name: Generate Test Coverage Report
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.1.3
+      with:
+        reports: 'coverage.xml'
+        targetdir: 'coveragereport'
+        reporttypes: 'HtmlInline;Cobertura;Badges' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, Xml, XmlSummary
+        verbosity: 'Info'
+        tag: '${{ github.run_number }}_${{ github.run_id }}'
+        toolpath: 'reportgeneratortool'
+      if: always()
+
+    - name: Upload Coverage Report Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: CoverageReport   
+        path: coveragereport
+      if: always()
 
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.9.7
