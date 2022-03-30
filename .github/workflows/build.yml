@@ -45,12 +45,14 @@ jobs:
         verbosity: 'Info'
         tag: '${{ github.run_number }}_${{ github.run_id }}'
         toolpath: 'reportgeneratortool'
+      if: always()
 
     - name: Upload Coverage Report Artifact
       uses: actions/upload-artifact@v2
       with:
         name: CoverageReport   
         path: coveragereport
+      if: always()
 
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.9.7
