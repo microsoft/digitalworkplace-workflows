@@ -34,7 +34,10 @@ jobs:
         dotnet-version: 6.0.x
 
     - name: Test
-      run: dotnet test --verbosity normal /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=coverage.cobertura.xml
+      run: dotnet test --verbosity normal /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=''coverage.cobertura.xml''
+
+    - name: Debug files
+      run: ls
 
     - name: Generate Test Coverage Report
       uses: danielpalme/ReportGenerator-GitHub-Action@5.1.3
