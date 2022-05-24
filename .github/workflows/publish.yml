@@ -1,0 +1,39 @@
+name: Publish
+
+on:
+  workflow_call:
+    secrets:
+      api_key:
+        required: true
+    inputs:
+      dry-run:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  Publish_Package:
+    runs-on: ubuntu-latest
+    environment: Release
+    steps:
+    - name: Download Signed Packages
+      uses: actions/download-artifact@v2
+      with:
+        name: signed
+        path: signed
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+
+    - name: Push Stable Package
+      run: |
+        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        if ($dry_run -eq $true) {
+          Write-Host "Dry-run enabled. Skipping nuget push."
+          Write-Host "Signed Filename found: $signedFileName"
+          return
+        }
+
+        Write-Host "Oh no, didn't skip"
+        # nuget push signed/$fileName -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.api_key }} -Verbosity detailed -NonInteractive
+      shell: pwsh
