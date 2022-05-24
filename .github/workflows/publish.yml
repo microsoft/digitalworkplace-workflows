@@ -6,7 +6,7 @@ on:
       api_key:
         required: true
     inputs:
-      dry-run:
+      dry_run:
         required: false
         type: boolean
         default: false
@@ -25,15 +25,17 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Push Stable Package
+    - name: Push Package Dry Run
+      if: inputs.dry_run == true
       run: |
         $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
-        if ($dry_run -eq $true) {
-          Write-Host "Dry-run enabled. Skipping nuget push."
-          Write-Host "Signed Filename found: $signedFileName"
-          return
-        }
+        Write-Host "Dry-run enabled. Not pushing to NuGet."
+        Write-Host "Signed Filename found: $signedFileName"
+      shell: pwsh
 
-        Write-Host "Oh no, didn't skip"
-        # nuget push signed/$fileName -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.api_key }} -Verbosity detailed -NonInteractive
+    - name: Push Package
+      if: inputs.dry_run == false
+      run: |
+        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        nuget push signed/$fileName -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.api_key }} -Verbosity detailed -NonInteractive
       shell: pwsh
