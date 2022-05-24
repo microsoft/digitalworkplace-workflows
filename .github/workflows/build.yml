@@ -87,5 +87,8 @@ jobs:
         run: dotnet pack "${{inputs.project-to-build}}" --configuration Release --output ./unsigned
 
       - name: Verify Package Metadata
-        run: scripts/msft-verify.ps1
+        run: |
+          $url = "https://raw.githubusercontent.com/NuGet/NuGetGallery/master/src/VerifyMicrosoftPackage/verify.ps1"
+          Invoke-WebRequest $url -OutFile verify.ps1
+          .\verify.ps1 .\unsigned\*.nupkg
         shell: pwsh
