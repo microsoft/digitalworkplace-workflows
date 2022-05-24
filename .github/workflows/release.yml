@@ -6,10 +6,27 @@ on:
       project-to-release:
         required: true
         type: string
-
-permissions:
-  contents: write
-  packages: write
+    secrets:
+      client_id:
+        required: true
+      az_creds:
+        required: true
+      az_sub:
+        required: true
+      storage_name:
+        required: true
+      container_name:
+        required: true
+      vault_name:
+        required: true
+      aad_cert:
+        required: true
+      sign_cert:
+        required: true
+      signing_cert_fingerprint:
+        required: true
+      api_key:
+        required: true
 
 jobs:
   Pack:
@@ -43,18 +60,18 @@ jobs:
     needs: Build
     uses: ./.github/workflows/sign.yml
     secrets:
-      client_id: ${{ secrets.AAD_SIGNING_CLIENT_ID }}
-      az_creds: ${{ secrets.AZURE_CREDENTIALS }}
-      az_sub: ${{ secrets.AZURE_SUBSCRIPTION }}
-      storage_name: ${{ secrets.AZURE_STORAGE }}
-      container_name: ${{ secrets.AZURE_STORAGE_CONTAINER }}
-      vault_name: ${{ secrets.AZURE_VAULT }}
-      aad_cert: ${{ secrets.AAD_AUTH_CERT }}
-      sign_cert: ${{ secrets.ESRP_SIGNING_CERT }}
-      signing_cert_fingerprint: ${{ secrets.SIGNING_CERT_FINGERPRINT }}
+      client_id: ${{ secrets.client_id }}
+      az_creds: ${{ secrets.az_creds }}
+      az_sub: ${{ secrets.az_sub }}
+      storage_name: ${{ secrets.storage_name }}
+      container_name: ${{ secrets.container_name }}
+      vault_name: ${{ secrets.vault_name }}
+      aad_cert: ${{ secrets.aad_cert }}
+      sign_cert: ${{ secrets.sign_cert }}
+      signing_cert_fingerprint: ${{ secrets.signing_cert_fingerprint }}
 
   Publish:
     needs: [Build, Sign]
     uses: ./.github/workflows/publish.yml
     secrets:
-      api_key: ${{ secrets.NUGET_API_KEY }}
+      api_key: ${{ secrets.api_key }}
