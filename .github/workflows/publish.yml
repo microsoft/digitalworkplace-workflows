@@ -12,7 +12,7 @@ on:
         default: false
 
 jobs:
-  Publish_Package:
+  Publish:
     runs-on: ubuntu-latest
     environment: Release
     steps:
