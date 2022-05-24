@@ -87,5 +87,5 @@ jobs:
         run: dotnet pack "${{inputs.project-to-build}}" --configuration Release --output ./unsigned
 
       - name: Verify Package Metadata
-        run: scripts/msft-verify.ps1
+        run: microsoft/digitalworkplace-workflows/scripts/msft-verify.ps1@users/mibir/new-workflows
         shell: pwsh
