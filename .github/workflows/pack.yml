@@ -1,0 +1,36 @@
+name: Pack
+
+on:
+  workflow_call:
+    inputs:
+      project-to-pack:
+        required: true
+        type: string
+
+jobs:
+  Pack:
+    runs-on: ubuntu-latest
+    env:
+      OFFICIAL_BUILD: 'True'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Restore packages
+        run: dotnet restore
+
+      - name: Package project
+        run: dotnet pack "${{inputs.project-to-pack}}" --configuration Release --output ./unsigned
+
+      - name: Upload Unsigned Packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: unsigned
+          path: unsigned
