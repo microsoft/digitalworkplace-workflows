@@ -4,16 +4,27 @@ This repo provides a set of Github workflow templates to be used by Microsoft.Di
 
 The templates take inputs and secrets as needed to run their defined behavior and stable_publish.yml workflow is the only one that assumes a Release environment, mainly for approval purposes.
 
+## Workflow overviews
+
 ### build.yml
-runs the basic build steps and test steps and generates NuGet packages for the project specified in the input.
+
+Runs the basic build steps and test steps and generates NuGet packages for the project specified in the input.
+
+### pack.yml
+
+Packs the given project and verifies the project has the correct metadata for Microsoft using a downloaded script, then uploads the nupkg to an 'unsigned' artifact - intended to be used later by the *sign* workflow.
 
 ### sign.yml
-communicates with ESRP (a Microsoft internal tool for signing NuGet packages) using their client and signs the packages in the artifacts folder - it assumes an `unsigned` artifacts folder that contains two folders: `beta` & `stable` for the corresponding .nupkg files. After signing the packages it uploads them to the `signed` artifacts folder with a similar hierarchy to the unsigned one.
 
-### beta_publish.yml and stable_publish.yml
-push the signed nupkg files to the public NuGet.org feed.
+Communicates with ESRP (a Microsoft internal tool for signing NuGet packages) using their client and signs the packag in the artifact folder - it assumes an `unsigned` artifact folder exists with the corresponding .nupkg file. After signing the package it uploads it to the `signed` artifact folder.
 
+### beta_publish.yml and stable_publish.yml [deprecated]
 
+Pushes the signed nupkg files to the public NuGet.org feed.
+
+### publish.yml
+
+Pushes the signed nupkg file to the public NuGet.org feed.
 
 ## Contributing
 

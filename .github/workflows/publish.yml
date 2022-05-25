@@ -1,0 +1,41 @@
+name: Publish
+
+on:
+  workflow_call:
+    secrets:
+      api_key:
+        required: true
+    inputs:
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  Publish:
+    runs-on: ubuntu-latest
+    environment: Release
+    steps:
+    - name: Download Signed Packages
+      uses: actions/download-artifact@v2
+      with:
+        name: signed
+        path: signed
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+
+    - name: Push Package Dry Run
+      if: inputs.dry_run == true
+      run: |
+        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        Write-Host "Dry-run enabled. Not pushing to NuGet."
+        Write-Host "Signed Filename found: $signedFileName"
+      shell: pwsh
+
+    - name: Push Package
+      if: inputs.dry_run == false
+      run: |
+        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        nuget push signed/$fileName -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.api_key }} -Verbosity detailed -NonInteractive
+      shell: pwsh

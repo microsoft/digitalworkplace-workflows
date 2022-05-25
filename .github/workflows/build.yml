@@ -1,111 +1,61 @@
+name: Build
+
 on:
   workflow_call:
     inputs:
-      project-to-pack:
+      project-to-build:
         required: true
         type: string
+      project-to-test:
+        required: false
+        type: string
+      test-filter:
+        required: false
+        type: string
+        default: TestCategory!=Integration
       coverage-threshold:
         required: false
         type: number
         default: 100
-    outputs:
-      beta-version:
-        description: "Beta version number."
-        value: ${{jobs.Pack.outputs.beta-version}}
-      stable-version:
-        description: "Stable version number."
-        value: ${{jobs.Pack.outputs.stable-version}}
 
 jobs:
-  Pack:
+  Build:
     runs-on: ubuntu-latest
-    outputs:
-      beta-version: ${{steps.version.outputs.beta-version}}
-      stable-version: ${{steps.version.outputs.stable-version}}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
 
-    - name: Test
-      run: dotnet test /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$GITHUB_WORKSPACE/coverage.xml
+      - name: Restore packages
+        run: dotnet restore
 
-    - name: Generate Test Coverage Report
-      uses: danielpalme/ReportGenerator-GitHub-Action@5.1.3
-      with:
-        reports: 'coverage.xml'
-        targetdir: 'coveragereport'
-        reporttypes: 'HtmlInline;Cobertura;Badges' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, Xml, XmlSummary
-        verbosity: 'Info'
-        tag: '${{ github.run_number }}_${{ github.run_id }}'
-        toolpath: 'reportgeneratortool'
-      if: always()
+      - name: Build
+        run: dotnet build "${{inputs.project-to-build}}" --no-restore --configuration Release
 
-    - name: Upload Coverage Report Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: CoverageReport   
-        path: coveragereport
-      if: always()
+      - name: Test
+        if: inputs.project-to-test != ''
+        run: dotnet test "${{inputs.project-to-test}}" --filter "${{inputs.test-filter}}" /p:CollectCoverage=true /p:Threshold=${{inputs.coverage-threshold}} /p:ThresholdType=line /p:ThresholdStat=total /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$GITHUB_WORKSPACE/coverage.xml
 
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.7
-      with:
-        versionSpec: '5.x'
+      - name: Generate Test Coverage Report
+        if: inputs.project-to-test != ''
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.1.3
+        with:
+          reports: "coverage.xml"
+          targetdir: "coveragereport"
+          reporttypes: "HtmlInline;Cobertura;Badges" # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, Xml, XmlSummary
+          verbosity: "Info"
+          tag: "${{ github.run_number }}_${{ github.run_id }}"
+          toolpath: "reportgeneratortool"
 
-    - name: Determine Version
-      id:   gitversion
-      uses: gittools/actions/gitversion/execute@v0.9.7
-      with:
-        useConfigFile: true
-
-    - name: Set version variables
-      run: |
-        echo "STABLE=${{steps.gitversion.outputs.majorMinorPatch}}" >> $GITHUB_ENV
-        echo "BETA=${{steps.gitversion.outputs.majorMinorPatch}}-beta.$(date +%s)" >> $GITHUB_ENV
-
-    - name: Output Version Numbers
-      id: version
-      run: |
-        echo "::set-output name=beta-version::${{env.BETA}}"
-        echo "::set-output name=stable-version::${{env.STABLE}}"
-
-    - name: Pack
-      run: |
-        dotnet pack "${{inputs.project-to-pack}}" --configuration Release /p:Version="${{env.BETA}}" --output unsigned/beta
-        dotnet pack "${{inputs.project-to-pack}}" --configuration Release /p:Version="${{env.STABLE}}" --output unsigned/stable
-
-    - name: Upload Unsigned Packages
-      uses: actions/upload-artifact@v2
-      with:
-        name: unsigned
-        path: unsigned
-
-#    - name: Get branch names
-#      id: branch-names
-#      uses: tj-actions/branch-names@v5.1
-
-#    - name: Current branch name
-#      run: echo "${{steps.branch-names.outputs.current_branch}}"
-
-#     - name: Install git-conventional-commits
-#       run: npm install --global git-conventional-commits
-      
-#     - name: Validate last commit message
-#       run: |
-#         git checkout ${{ steps.branch-names.outputs.current_branch }}
-#         git rev-list --format=%B --max-count=1 HEAD | tail +2 > msg.txt
-#         git-conventional-commits commit-msg-hook msg.txt
-
-#     - name: Determine version
-#       id: conventional-commits
-#       run: echo "::set-output name=version::$(npx -q git-conventional-commits version)"
-      
-#     - name: examine version
-#       run: echo "${{ steps.conventional-commits.outputs.version }}"
+      - name: Upload Coverage Report Artifact
+        if: inputs.project-to-test != ''
+        uses: actions/upload-artifact@v2
+        with:
+          name: CoverageReport
+          path: coveragereport
