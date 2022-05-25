@@ -9,10 +9,6 @@ on:
       project-to-test:
         required: false
         type: string
-      run-package-verification:
-        required: false
-        type: boolean
-        default: false
       test-filter:
         required: false
         type: string
@@ -63,22 +59,3 @@ jobs:
         with:
           name: CoverageReport
           path: coveragereport
-
-  Verify:
-    if: inputs.run-package-verification == true
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: PrePack
-        run: dotnet pack "${{inputs.project-to-build}}" --configuration Release --output ./unsigned
-
-      - name: Verify Package Metadata
-        run: |
-          $url = "https://raw.githubusercontent.com/NuGet/NuGetGallery/master/src/VerifyMicrosoftPackage/verify.ps1"
-          Invoke-WebRequest $url -OutFile verify.ps1
-          .\verify.ps1 .\unsigned\*.nupkg
-        shell: pwsh
