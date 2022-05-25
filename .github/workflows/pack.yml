@@ -29,7 +29,7 @@ jobs:
 
       - name: Verify Package Metadata
         run: |
-          $url = "https://raw.githubusercontent.com/NuGet/NuGetGallery/master/src/VerifyMicrosoftPackage/verify.ps1"
+          $url = "https://raw.githubusercontent.com/NuGet/NuGetGallery/main/src/VerifyMicrosoftPackage/verify.ps1"
           Invoke-WebRequest $url -OutFile verify.ps1
           .\verify.ps1 .\unsigned\*.nupkg
         shell: pwsh
