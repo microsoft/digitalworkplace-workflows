@@ -10,8 +10,6 @@ on:
 jobs:
   Pack:
     runs-on: ubuntu-latest
-    env:
-      OFFICIAL_BUILD: 'True'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
