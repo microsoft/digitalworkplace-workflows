@@ -5,23 +5,23 @@ on:
     secrets:
       azure_login_client_id:
         required: true
-      aad_signing_client_id:
-        required: true
       aad_tenant_id:
         required: true
       azure_subscription_id:
         required: true
-      storage_name:
+      storage_account_name:
         required: true
       container_name:
         required: true
-      vault_name:
+      key_vault_name:
         required: true
-      aad_cert:
+      esrp_aad_client_id:
         required: true
-      sign_cert:
+      esrp_aad_auth_cert:
         required: true
-      signing_cert_fingerprint:
+      esrp_signing_cert:
+        required: true
+      esrp_signing_cert_thumbprint:
         required: true
 
 permissions:
@@ -52,7 +52,7 @@ jobs:
       run: |
         $url = "https://raw.githubusercontent.com/microsoft/digitalworkplace-workflows/main/scripts/sign.ps1"
         Invoke-WebRequest $url -OutFile sign.ps1
-        .\sign.ps1 ${{ secrets.aad_signing_client_id }} ${{ github.workspace }} ${{ secrets.azure_subscription_id }} ${{ secrets.storage_name }} ${{ secrets.container_name }} ${{ secrets.vault_name }} ${{ secrets.aad_cert }} ${{ secrets.sign_cert }} ${{ secrets.signing_cert_fingerprint }}
+        .\sign.ps1 ${{ secrets.esrp_aad_client_id }} ${{ github.workspace }} ${{ secrets.azure_subscription_id }} ${{ secrets.storage_account_name }} ${{ secrets.container_name }} ${{ secrets.key_vault_name }} ${{ secrets.esrp_aad_auth_cert }} ${{ secrets.esrp_signing_cert }} ${{ secrets.esrp_signing_cert_thumbprint }}
       shell: pwsh
 
     - name: Azure logout
