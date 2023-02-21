@@ -30,7 +30,7 @@ permissions:
 jobs:
   Sign:
     runs-on: windows-latest
-    environment: sign
+    environment: Sign
     steps:
     - name: Download Unsigned Packages
       uses: actions/download-artifact@v2
