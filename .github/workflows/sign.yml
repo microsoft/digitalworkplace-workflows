@@ -5,7 +5,7 @@ on:
     secrets:
       client_id:
         required: true
-      az_creds:
+      tenant_id:
         required: true
       az_sub:
         required: true
@@ -38,7 +38,9 @@ jobs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-          creds: ${{ secrets.az_creds }}
+        client-id: ${{ secrets.client_id }}
+        tenant-id: ${{ secrets.tenant_id }}
+        subscription-id: ${{ secrets.az_sub }}
 
     - name: Run Signing Script
       run: |
