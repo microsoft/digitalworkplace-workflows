@@ -22,9 +22,13 @@ on:
       signing_cert_fingerprint:
         required: true
 
+permissions:
+  id-token: write
+
 jobs:
   Sign:
     runs-on: windows-latest
+    environment: Sign
     steps:
     - name: Download Unsigned Packages
       uses: actions/download-artifact@v2
