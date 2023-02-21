@@ -1,14 +1,16 @@
 param(
-    [Parameter(Mandatory=$true)] [string]$clientId,
+    [Parameter(Mandatory=$true)] [string]$signingClientId,
     [Parameter(Mandatory=$true)] [string]$workspace,
     [Parameter(Mandatory=$true)] [string]$subscriptionId,
+    [Parameter(Mandatory=$true)] [string]$tenantId,
     [Parameter(Mandatory=$true)] [string]$storage_name,
     [Parameter(Mandatory=$true)] [string]$container_name,
     [Parameter(Mandatory=$true)] [string]$vault_name,
     [Parameter(Mandatory=$true)] [string]$aad_cert,
     [Parameter(Mandatory=$true)] [string]$sign_cert,
     [Parameter(Mandatory=$true)] [string]$signing_cert_fingerprint,
-    [Parameter(Mandatory=$false)] [switch]$user_login
+    [Parameter(Mandatory=$false)] [switch]$user_login,
+    [Parameter(Mandatory=$false)] [string]$esrp_client_blob_name = "microsoft.esrpclient.1.2.76.zip"
 )
 
 if ($workspace -notmatch '\\\\')
@@ -46,16 +48,16 @@ $authJson = @"
 {
     "Version": "1.0.0",
     "AuthenticationType": "AAD_CERT",
-    "TenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
-    "ClientId": "$clientId",
+    "TenantId": "$tenantId",
+    "signingClientId": "$signingClientId",
     "AuthCert": {
-        "SubjectName": "CN=$clientId.microsoft.com",
+        "SubjectName": "CN=$signingClientId.microsoft.com",
         "StoreLocation": "LocalMachine",
         "StoreName": "My",
         "SendX5c": "true"
     },
     "RequestSigningCert": {
-        "SubjectName": "CN=$clientId",
+        "SubjectName": "CN=$signingClientId",
         "StoreLocation": "LocalMachine",
         "StoreName": "My"
     }
@@ -101,7 +103,7 @@ Out-File -FilePath .\input.json -InputObject $inputJson
 Write-Host 'Done.'
 try {
     Write-Host 'Downloading ESRP Client.'
-    az storage blob download --auth-mode login --subscription  $subscriptionId --account-name $storage_name -c $container_name -n microsoft.esrpclient.1.2.76.zip -f esrp.zip
+    az storage blob download --auth-mode login --subscription  $subscriptionId --account-name $storage_name -c $container_name -n $esrp_client_blob_name -f esrp.zip
     if (Test-Path 'esrp.zip') {
         Write-Host 'Done.'
     } else {
