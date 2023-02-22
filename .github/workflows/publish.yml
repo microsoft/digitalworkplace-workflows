@@ -17,13 +17,13 @@ jobs:
     environment: Release
     steps:
     - name: Download Signed Packages
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: signed
         path: signed
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+      uses: NuGet/setup-nuget@v1
 
     - name: Push Package Dry Run
       if: inputs.dry_run == true

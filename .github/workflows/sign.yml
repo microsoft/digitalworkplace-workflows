@@ -33,13 +33,13 @@ jobs:
     environment: Sign
     steps:
     - name: Download Unsigned Packages
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: unsigned
         path: unsigned
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+      uses: NuGet/setup-nuget@v1
 
     - name: Azure Login
       uses: azure/login@v1
@@ -60,7 +60,7 @@ jobs:
       if: always()
 
     - name: Upload Signed Packages
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: signed
         path: signed
