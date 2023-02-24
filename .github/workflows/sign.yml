@@ -3,25 +3,13 @@ name: Sign
 on:
   workflow_call:
     secrets:
-      azure_login_client_id:
+      AAD_CLIENT_ID:
         required: true
-      aad_tenant_id:
+      AAD_TENANT_ID:
         required: true
-      azure_subscription_id:
+      AZURE_SUBSCRIPTION_ID:
         required: true
-      storage_account_name:
-        required: true
-      container_name:
-        required: true
-      key_vault_name:
-        required: true
-      esrp_aad_client_id:
-        required: true
-      esrp_aad_auth_cert:
-        required: true
-      esrp_signing_cert:
-        required: true
-      esrp_signing_cert_thumbprint:
+      KEY_VAULT_NAME:
         required: true
 
 permissions:
@@ -38,21 +26,59 @@ jobs:
         name: unsigned
         path: unsigned
 
+    - name: Checkout microsoft/digitalworkplace-workflows
+      uses: actions/checkout@v3
+      with:
+        repository: microsoft/digitalworkplace-workflows
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: digitalworkplace-workflows
+
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1
 
     - name: Azure Login
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.azure_login_client_id }}
-        tenant-id: ${{ secrets.aad_tenant_id }}
-        subscription-id: ${{ secrets.azure_subscription_id }}
+        client-id: ${{ secrets.AAD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AAD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Get secrets from Key Vault
+      id: get-secrets
+      run: |
+        $env:AZURE_SUBSCRIPTION_ID = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        $env:KEY_VAULT_NAME = "${{ secrets.KEY_VAULT_NAME }}"
+        . .\digitalworkplace-workflows\scripts\get-secret.ps1
+
+        $secrets = [ordered]@{
+          "github-signing-storage-account-name" = "storage-account-name"
+          "github-signing-container-name" = "container-name"
+          "github-signing-esrp-aad-client-id" = "esrp-aad-client-id"
+          "github-signing-esrp-aad-auth-cert-secret-name" = "esrp-aad-auth-cert-secret-name"
+          "github-signing-esrp-signing-cert-secret-name" = "esrp-signing-cert-secret-name"
+          "github-signing-esrp-signing-cert-thumbprint" = "esrp-signing-cert-thumbprint"
+          "github-signing-esrp-client-blob-name" = "esrp-client-blob-name"
+        }
+
+        foreach ($Key in $secrets.Keys) {
+          Get-Secret -secretName $Key -outputName $secrets[$Key]
+        }
+      shell: pwsh
 
     - name: Run Signing Script
       run: |
-        $url = "https://raw.githubusercontent.com/microsoft/digitalworkplace-workflows/main/scripts/sign.ps1"
-        Invoke-WebRequest $url -OutFile sign.ps1
-        .\sign.ps1 ${{ secrets.esrp_aad_client_id }} ${{ github.workspace }} ${{ secrets.azure_subscription_id }} ${{ secrets.storage_account_name }} ${{ secrets.container_name }} ${{ secrets.key_vault_name }} ${{ secrets.esrp_aad_auth_cert }} ${{ secrets.esrp_signing_cert }} ${{ secrets.esrp_signing_cert_thumbprint }}
+        .\digitalworkplace-workflows\scripts\sign.ps1 `
+          -esrpSigningAadClientId '${{ steps.get-secrets.outputs.esrp-aad-client-id }}' `
+          -workspace '${{ github.workspace }}' `
+          -azureSubscriptionId '${{ secrets.AZURE_SUBSCRIPTION_ID }}' `
+          -aadTenantId '${{ secrets.AAD_TENANT_ID }}' `
+          -storageAccountName '${{ steps.get-secrets.outputs.storage-account-name }}' `
+          -containerName '${{ steps.get-secrets.outputs.container-name }}' `
+          -keyVaultName '${{ secrets.KEY_VAULT_NAME }}' `
+          -esrpAadAuthCertSecretName '${{ steps.get-secrets.outputs.esrp-aad-auth-cert-secret-name }}' `
+          -esrpSigningCertSecretName '${{ steps.get-secrets.outputs.esrp-signing-cert-secret-name }}' `
+          -esrpSigningCertFingerprint '${{ steps.get-secrets.outputs.esrp-signing-cert-thumbprint }}' `
+          -esrpClientBlobName '${{ steps.get-secrets.outputs.esrp-client-blob-name }}'
       shell: pwsh
 
     - name: Azure logout
