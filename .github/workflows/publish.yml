@@ -3,13 +3,22 @@ name: Publish
 on:
   workflow_call:
     secrets:
-      api_key:
+      AAD_CLIENT_ID:
+        required: true
+      AAD_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+      KEY_VAULT_NAME:
         required: true
     inputs:
       dry_run:
         required: false
         type: boolean
         default: false
+
+permissions:
+  id-token: write
 
 jobs:
   Publish:
@@ -22,20 +31,94 @@ jobs:
         name: signed
         path: signed
 
+    - name: Checkout microsoft/digitalworkplace-workflows
+      uses: actions/checkout@v3
+      with:
+        repository: microsoft/digitalworkplace-workflows
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: digitalworkplace-workflows
+        ref: v3.1-beta
+
+    - name: Get runner's IP address
+      id: ip-address
+      run: |
+        . .\digitalworkplace-workflows\scripts\get-externalipaddress.ps1
+        Get-ExternalIPAddress "ip-address"
+      shell: pwsh
+
+    - name: Azure login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AAD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AAD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Allow runner's IP address in Key Vault
+      run: |
+        az keyvault network-rule add `
+          --name ${{ secrets.KEY_VAULT_NAME }} `
+          --ip-address ${{ steps.ip-address.outputs.ip-address }} `
+          --output none
+      shell: pwsh
+
+    - name: Get NuGet API key from Key Vault
+      id: get-api-key
+      run: |
+        $env:AZURE_SUBSCRIPTION_ID = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        $env:KEY_VAULT_NAME = "${{ secrets.KEY_VAULT_NAME }}"
+        . .\digitalworkplace-workflows\scripts\get-secret.ps1
+        Get-Secret -secretName "github-publishing-nuget-api-key" -outputName "nuget-api-key"
+      shell: pwsh
+
+    - name: Remove runner's IP address from Key Vault
+      run: |
+        az keyvault network-rule remove `
+          --name ${{ secrets.KEY_VAULT_NAME }} `
+          --ip-address ${{ steps.ip-address.outputs.ip-address }} `
+          --output none
+      shell: pwsh
+      if: always()
+
+    - name: Azure logout
+      run: az logout
+      if: always()
+
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1
+
+    - name: Find signed package
+      id: find-signed-package
+      run: |
+        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        Write-Host "Signed file name found: $signedFileName"
+        Write-Output "$fileName=$signedFileName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
 
     - name: Push Package Dry Run
       if: inputs.dry_run == true
       run: |
-        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
+        $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
+        Write-Host "Signed file name (confirmation): $signedFileName"
         Write-Host "Dry-run enabled. Not pushing to NuGet."
-        Write-Host "Signed Filename found: $signedFileName"
+
+        $response = Invoke-WebRequest `
+          https://www.nuget.org/api/v2/package/create-verification-key/Microsoft.DigitalWorkplace.DigitalTwins.Models.Generator/0.2.0 `
+          -Headers @{'X-NUGET-APIKEY' = '${{ steps.get-api-key.outputs.nuget-api-key }}'} `
+          -Method 'POST'
+        if ($response.StatusCode -eq 200) {
+          Write-Host "NuGet API key is valid."
+        } else {
+          Write-Host "::error::NuGet API key is invalid."
+        }
       shell: pwsh
 
     - name: Push Package
       if: inputs.dry_run == false
       run: |
-        $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
-        nuget push signed/$fileName -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.api_key }} -Verbosity detailed -NonInteractive
+        $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
+        nuget push signed/$fileName `
+          -Source https://api.nuget.org/v3/index.json `
+          -ApiKey ${{ steps.get-api-key.outputs.nuget-api-key }} `
+          -Verbosity detailed `
+          -NonInteractive
       shell: pwsh
