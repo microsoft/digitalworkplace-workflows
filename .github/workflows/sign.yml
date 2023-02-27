@@ -33,6 +33,13 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         path: digitalworkplace-workflows
 
+    - name: Get runner's IP address
+      id: ip-address
+      run: |
+        . .\digitalworkplace-workflows\scripts\get-externalipaddress.ps1
+        Get-ExternalIPAddress "ip-address"
+      shell: pwsh
+
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1
 
@@ -42,6 +49,14 @@ jobs:
         client-id: ${{ secrets.AAD_CLIENT_ID }}
         tenant-id: ${{ secrets.AAD_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Allow runner's IP address in Key Vault
+      run: |
+        az keyvault network-rule add `
+          --name ${{ secrets.KEY_VAULT_NAME }} `
+          --ip-address ${{ steps.ip-address.outputs.ip-address }} `
+          --output none
+      shell: pwsh
 
     - name: Get secrets from Key Vault
       id: get-secrets
@@ -80,6 +95,15 @@ jobs:
           -esrpSigningCertFingerprint '${{ steps.get-secrets.outputs.esrp-signing-cert-thumbprint }}' `
           -esrpClientBlobName '${{ steps.get-secrets.outputs.esrp-client-blob-name }}'
       shell: pwsh
+
+    - name: Remove runner's IP address from Key Vault
+      run: |
+        az keyvault network-rule remove `
+          --name ${{ secrets.KEY_VAULT_NAME }} `
+          --ip-address ${{ steps.ip-address.outputs.ip-address }} `
+          --output none
+      shell: pwsh
+      if: always()
 
     - name: Azure logout
       run: az logout
