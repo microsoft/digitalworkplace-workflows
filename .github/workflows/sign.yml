@@ -61,8 +61,6 @@ jobs:
     - name: Get secrets from Key Vault
       id: get-secrets
       run: |
-        $env:AZURE_SUBSCRIPTION_ID = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        $env:KEY_VAULT_NAME = "${{ secrets.KEY_VAULT_NAME }}"
         . .\digitalworkplace-workflows\scripts\get-secret.ps1
 
         $secrets = [ordered]@{
@@ -76,7 +74,11 @@ jobs:
         }
 
         foreach ($Key in $secrets.Keys) {
-          Get-Secret -secretName $Key -outputName $secrets[$Key]
+          Get-Secret `
+            -subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }} `
+            -keyVaultName ${{ secrets.KEY_VAULT_NAME }} `
+            -secretName $Key `
+            -outputName $secrets[$Key]
         }
       shell: pwsh
 
@@ -85,7 +87,7 @@ jobs:
         .\digitalworkplace-workflows\scripts\sign.ps1 `
           -esrpSigningAadClientId '${{ steps.get-secrets.outputs.esrp-aad-client-id }}' `
           -workspace '${{ github.workspace }}' `
-          -azureSubscriptionId '${{ secrets.AZURE_SUBSCRIPTION_ID }}' `
+          -subscriptionId '${{ secrets.AZURE_SUBSCRIPTION_ID }}' `
           -aadTenantId '${{ secrets.AAD_TENANT_ID }}' `
           -storageAccountName '${{ steps.get-secrets.outputs.storage-account-name }}' `
           -containerName '${{ steps.get-secrets.outputs.container-name }}' `

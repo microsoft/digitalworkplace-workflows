@@ -1,11 +1,13 @@
 function Get-Secret {
     param (
+        [Parameter(Mandatory=$true)] [string]$subscriptionId,
+        [Parameter(Mandatory=$true)] [string]$keyVaultName,
         [Parameter(Mandatory=$true)] [string]$secretName,
         [Parameter(Mandatory=$true)] [string]$outputName
     )
     $secret = az keyvault secret show `
-                --subscription $env:AZURE_SUBSCRIPTION_ID `
-                --vault-name $env:KEY_VAULT_NAME `
+                --subscription $subscriptionId `
+                --vault-name $keyVaultName `
                 --name $secretName `
                 | ConvertFrom-Json
 

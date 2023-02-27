@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory=$true)] [string]$esrpSigningAadClientId,
     [Parameter(Mandatory=$true)] [string]$workspace,
-    [Parameter(Mandatory=$true)] [string]$azureSubscriptionId,
+    [Parameter(Mandatory=$true)] [string]$subscriptionId,
     [Parameter(Mandatory=$true)] [string]$aadTenantId,
     [Parameter(Mandatory=$true)] [string]$storageAccountName,
     [Parameter(Mandatory=$true)] [string]$containerName,
@@ -33,7 +33,7 @@ Write-Host "Found unsigned nupkg: $fileName"
 if ($userLogin) {
     Write-Host 'Logging into Azure.'
     az login --output none
-    az account set --subscription $azureSubscriptionId
+    az account set --subscription $subscriptionId
 }
 
 if (Test-Path 'signed') {
@@ -103,7 +103,7 @@ Out-File -FilePath .\input.json -InputObject $inputJson
 Write-Host 'Done.'
 try {
     Write-Host 'Downloading ESRP Client.'
-    az storage blob download --auth-mode login --subscription  $azureSubscriptionId --account-name $storageAccountName -c $containerName -n $esrpClientBlobName -f esrp.zip
+    az storage blob download --auth-mode login --subscription  $subscriptionId --account-name $storageAccountName -c $containerName -n $esrpClientBlobName -f esrp.zip
     if (Test-Path 'esrp.zip') {
         Write-Host 'Done.'
     } else {
@@ -115,10 +115,10 @@ try {
     Write-Host 'Done.'
     Write-Host 'Downloading & Installing Certifictes.'
     Remove-Item cert.pfx -ErrorAction SilentlyContinue
-    az keyvault secret download --subscription $azureSubscriptionId --vault-name $keyVaultName --name $esrpAadAuthCertSecretName -f cert.pfx
+    az keyvault secret download --subscription $subscriptionId --vault-name $keyVaultName --name $esrpAadAuthCertSecretName -f cert.pfx
     certutil -silent -f -importpfx cert.pfx
     Remove-Item cert.pfx
-    az keyvault secret download --subscription $azureSubscriptionId --vault-name $keyVaultName --name $esrpSigningCertSecretName -f cert.pfx
+    az keyvault secret download --subscription $subscriptionId --vault-name $keyVaultName --name $esrpSigningCertSecretName -f cert.pfx
     certutil -silent -f -importpfx cert.pfx
     Remove-Item cert.pfx
     Write-Host 'Done.'
