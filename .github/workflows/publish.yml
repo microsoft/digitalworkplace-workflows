@@ -37,7 +37,6 @@ jobs:
         repository: microsoft/digitalworkplace-workflows
         token: ${{ secrets.GITHUB_TOKEN }}
         path: digitalworkplace-workflows
-        ref: v3.1-beta
 
     - name: Get runner's IP address
       id: ip-address
