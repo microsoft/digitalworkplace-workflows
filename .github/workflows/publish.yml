@@ -116,7 +116,7 @@ jobs:
       if: inputs.dry_run == false
       run: |
         $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
-        nuget push signed/$fileName `
+        nuget push signed/$signedFileName `
           -Source https://api.nuget.org/v3/index.json `
           -ApiKey ${{ steps.get-api-key.outputs.nuget-api-key }} `
           -Verbosity detailed `
