@@ -111,6 +111,14 @@ jobs:
       run: az logout
       if: always()
 
+    - name: Copy snupkg file to signed folder
+      run: |
+        Copy-Item `
+          -Path unsigned\*.snupkg `
+          -Destination signed\ `
+          -Force
+      shell: pwsh
+
     - name: Upload Signed Packages
       uses: actions/upload-artifact@v3
       with:
