@@ -1,16 +1,16 @@
 param(
-    [Parameter(Mandatory=$true)] [string]$signingClientId,
+    [Parameter(Mandatory=$true)] [string]$esrpSigningAadClientId,
     [Parameter(Mandatory=$true)] [string]$workspace,
     [Parameter(Mandatory=$true)] [string]$subscriptionId,
-    [Parameter(Mandatory=$true)] [string]$tenantId,
-    [Parameter(Mandatory=$true)] [string]$storage_name,
-    [Parameter(Mandatory=$true)] [string]$container_name,
-    [Parameter(Mandatory=$true)] [string]$vault_name,
-    [Parameter(Mandatory=$true)] [string]$aad_cert,
-    [Parameter(Mandatory=$true)] [string]$sign_cert,
-    [Parameter(Mandatory=$true)] [string]$signing_cert_fingerprint,
-    [Parameter(Mandatory=$false)] [switch]$user_login,
-    [Parameter(Mandatory=$false)] [string]$esrp_client_blob_name = "microsoft.esrpclient.1.2.76.zip"
+    [Parameter(Mandatory=$true)] [string]$aadTenantId,
+    [Parameter(Mandatory=$true)] [string]$storageAccountName,
+    [Parameter(Mandatory=$true)] [string]$containerName,
+    [Parameter(Mandatory=$true)] [string]$keyVaultName,
+    [Parameter(Mandatory=$true)] [string]$esrpAadAuthCertSecretName,
+    [Parameter(Mandatory=$true)] [string]$esrpSigningCertSecretName,
+    [Parameter(Mandatory=$true)] [string]$esrpSigningCertFingerprint,
+    [Parameter(Mandatory=$true)] [string]$esrpClientBlobName,
+    [Parameter(Mandatory=$false)] [switch]$userLogin
 )
 
 if ($workspace -notmatch '\\\\')
@@ -30,7 +30,7 @@ if ([string]::IsNullOrWhiteSpace($fileName)) {
 }
 
 Write-Host "Found unsigned nupkg: $fileName"
-if ($user_login) {
+if ($userLogin) {
     Write-Host 'Logging into Azure.'
     az login --output none
     az account set --subscription $subscriptionId
@@ -48,16 +48,16 @@ $authJson = @"
 {
     "Version": "1.0.0",
     "AuthenticationType": "AAD_CERT",
-    "TenantId": "$tenantId",
-    "signingClientId": "$signingClientId",
+    "TenantId": "$aadTenantId",
+    "ClientId": "$esrpSigningAadClientId",
     "AuthCert": {
-        "SubjectName": "CN=$signingClientId.microsoft.com",
+        "SubjectName": "CN=$esrpSigningAadClientId.microsoft.com",
         "StoreLocation": "LocalMachine",
         "StoreName": "My",
         "SendX5c": "true"
     },
     "RequestSigningCert": {
-        "SubjectName": "CN=$signingClientId",
+        "SubjectName": "CN=$esrpSigningAadClientId",
         "StoreLocation": "LocalMachine",
         "StoreName": "My"
     }
@@ -103,7 +103,7 @@ Out-File -FilePath .\input.json -InputObject $inputJson
 Write-Host 'Done.'
 try {
     Write-Host 'Downloading ESRP Client.'
-    az storage blob download --auth-mode login --subscription  $subscriptionId --account-name $storage_name -c $container_name -n $esrp_client_blob_name -f esrp.zip
+    az storage blob download --auth-mode login --subscription  $subscriptionId --account-name $storageAccountName -c $containerName -n $esrpClientBlobName -f esrp.zip
     if (Test-Path 'esrp.zip') {
         Write-Host 'Done.'
     } else {
@@ -115,10 +115,10 @@ try {
     Write-Host 'Done.'
     Write-Host 'Downloading & Installing Certifictes.'
     Remove-Item cert.pfx -ErrorAction SilentlyContinue
-    az keyvault secret download --subscription $subscriptionId --vault-name $vault_name --name $aad_cert -f cert.pfx
+    az keyvault secret download --subscription $subscriptionId --vault-name $keyVaultName --name $esrpAadAuthCertSecretName -f cert.pfx
     certutil -silent -f -importpfx cert.pfx
     Remove-Item cert.pfx
-    az keyvault secret download --subscription $subscriptionId --vault-name $vault_name --name $sign_cert -f cert.pfx
+    az keyvault secret download --subscription $subscriptionId --vault-name $keyVaultName --name $esrpSigningCertSecretName -f cert.pfx
     certutil -silent -f -importpfx cert.pfx
     Remove-Item cert.pfx
     Write-Host 'Done.'
@@ -136,7 +136,7 @@ try {
 
     Write-Host 'Done. Signing Complete.'
     Write-Host 'Verifying signatures with NuGet.'
-    $result = nuget verify -Signatures signed/$signedFileName -CertificateFingerprint $signing_cert_fingerprint
+    $result = nuget verify -Signatures signed/$signedFileName -CertificateFingerprint $esrpSigningCertFingerprint
     Write-Host $result
     $validationFailString = $result | Where-Object { $_ -match 'Package signature validation failed.'}
     $noPackageFailString = $result | Where-Object { $_ -match 'File does not exist'}
@@ -151,7 +151,7 @@ try {
 } catch {
     throw
 } finally {
-    if ($user_login) {
+    if ($userLogin) {
         az logout
     }
 }

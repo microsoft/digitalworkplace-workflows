@@ -36,7 +36,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build "${{inputs.project-to-build}}" --no-restore --configuration Release
+        run: dotnet build "${{inputs.project-to-build}}" --no-restore --configuration Release /p:BuildNumber=${{ github.run_number }} /p:GITHUB_ACTIONS=true
 
       - name: Test
         if: inputs.project-to-test != ''

@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore
 
       - name: Package project
-        run: dotnet pack "${{inputs.project-to-pack}}" --configuration Release --output ./unsigned
+        run: dotnet pack "${{inputs.project-to-pack}}" --configuration Release --output ./unsigned /p:BuildNumber=${{ github.run_number }} /p:GITHUB_ACTIONS=true
 
       - name: Verify Package Metadata
         run: |
