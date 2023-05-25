@@ -98,7 +98,7 @@ jobs:
     - name: Push Package Dry Run
       if: inputs.dry_run == true
       run: |
-        $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
+        $signedFileName = "${{ steps.find-signed-package.outputs.fileName }}"
         Write-Host "Signed file name (confirmation): $signedFileName"
         Write-Host "Dry-run enabled. Not pushing to NuGet."
 
