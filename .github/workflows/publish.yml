@@ -63,10 +63,12 @@ jobs:
     - name: Get NuGet API key from Key Vault
       id: get-api-key
       run: |
-        $env:AZURE_SUBSCRIPTION_ID = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        $env:KEY_VAULT_NAME = "${{ secrets.KEY_VAULT_NAME }}"
         . .\digitalworkplace-workflows\scripts\get-secret.ps1
-        Get-Secret -secretName "github-publishing-nuget-api-key" -outputName "nuget-api-key"
+        Get-Secret `
+          -subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }} `
+          -keyVaultName ${{ secrets.KEY_VAULT_NAME }} `
+          -secretName "github-publishing-nuget-api-key" `
+          -outputName "nuget-api-key"
       shell: pwsh
 
     - name: Remove runner's IP address from Key Vault
@@ -90,13 +92,13 @@ jobs:
       run: |
         $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
         Write-Host "Signed file name found: $signedFileName"
-        Write-Output "$fileName=$signedFileName" >> $env:GITHUB_OUTPUT
+        Write-Output "fileName=$signedFileName" >> $env:GITHUB_OUTPUT
       shell: pwsh
 
     - name: Push Package Dry Run
       if: inputs.dry_run == true
       run: |
-        $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
+        $signedFileName = "${{ steps.find-signed-package.outputs.fileName }}"
         Write-Host "Signed file name (confirmation): $signedFileName"
         Write-Host "Dry-run enabled. Not pushing to NuGet."
 
@@ -114,7 +116,7 @@ jobs:
     - name: Push Package
       if: inputs.dry_run == false
       run: |
-        $signedFileName = ${{ steps.find-signed-package.outputs.fileName }}
+        $signedFileName = "${{ steps.find-signed-package.outputs.fileName }}"
         nuget push signed/$signedFileName `
           -Source https://api.nuget.org/v3/index.json `
           -ApiKey ${{ steps.get-api-key.outputs.nuget-api-key }} `
