@@ -92,7 +92,7 @@ jobs:
       run: |
         $signedFileName = (Get-ChildItem -Recurse -Path signed -Filter *.nupkg | Select-Object -Property Name -First 1).Name
         Write-Host "Signed file name found: $signedFileName"
-        Write-Output "$fileName=$signedFileName" >> $env:GITHUB_OUTPUT
+        Write-Output "fileName=$signedFileName" >> $env:GITHUB_OUTPUT
       shell: pwsh
 
     - name: Push Package Dry Run
