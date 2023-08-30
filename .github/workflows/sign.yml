@@ -59,6 +59,7 @@ jobs:
       run: |
         az keyvault network-rule add `
           --name ${{ secrets.KEY_VAULT_NAME }} `
+          --resource-group ${{ secrets.KEY_VAULT_NAME }} `
           --ip-address ${{ steps.ip-address.outputs.ip-address }} `
           --output none
       shell: pwsh
