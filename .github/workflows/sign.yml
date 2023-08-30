@@ -50,16 +50,11 @@ jobs:
         tenant-id: ${{ secrets.AAD_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Upgrade azure cli
-      run: |
-        az upgrade
-      shell: pwsh
-
     - name: Allow runner's IP address in Key Vault
       run: |
         az keyvault network-rule add `
           --name ${{ secrets.KEY_VAULT_NAME }} `
-          --resource-group ${{ secrets.KEY_VAULT_NAME }} `
+          --resource-group ${{ secrets.KEY_VAULT_RESOURCE_GROUP }} `
           --ip-address ${{ steps.ip-address.outputs.ip-address }} `
           --output none
       shell: pwsh
@@ -108,7 +103,7 @@ jobs:
       run: |
         az keyvault network-rule remove `
           --name ${{ secrets.KEY_VAULT_NAME }} `
-          --resource-group ${{ secrets.KEY_VAULT_NAME }} `
+          --resource-group ${{ secrets.KEY_VAULT_RESOURCE_GROUP }} `
           --ip-address ${{ steps.ip-address.outputs.ip-address }} `
           --output none
       shell: pwsh
