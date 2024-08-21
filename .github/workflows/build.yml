@@ -44,7 +44,7 @@ jobs:
 
       - name: Generate Test Coverage Report
         if: inputs.project-to-test != ''
-        uses: danielpalme/ReportGenerator-GitHub-Action@5
+        uses: danielpalme/ReportGenerator-GitHub-Action@5808021ec4deecb0ab3da051d49b4ce65fcc20af
         with:
           reports: "coverage.xml"
           targetdir: "coveragereport"
