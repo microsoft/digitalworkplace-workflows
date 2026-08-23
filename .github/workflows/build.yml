@@ -23,12 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           fetch-depth: 0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@55ec9447dda3d1cf6bd587150f3262f30ee10815 # v3.4.2
         with:
           dotnet-version: 6.0.x
 
@@ -44,7 +44,7 @@ jobs:
 
       - name: Generate Test Coverage Report
         if: inputs.project-to-test != ''
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.3.8
+        uses: danielpalme/ReportGenerator-GitHub-Action@5808021ec4deecb0ab3da051d49b4ce65fcc20af # 5.3.8
         with:
           reports: "coverage.xml"
           targetdir: "coveragereport"
@@ -55,7 +55,7 @@ jobs:
 
       - name: Upload Coverage Report Artifact
         if: inputs.project-to-test != ''
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3.2.1
         with:
           name: CoverageReport
           path: coveragereport
