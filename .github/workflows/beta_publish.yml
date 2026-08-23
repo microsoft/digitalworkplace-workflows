@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download Signed Packages
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       with:
         name: signed
         path: signed
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1
+      uses: NuGet/setup-nuget@296fd3ccf8528660c91106efefe2364482f86d6f # v1.2.0
 
     - name: Push Beta Package
       run: |

@@ -21,13 +21,13 @@ jobs:
     environment: Sign
     steps:
     - name: Download Unsigned Packages
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       with:
         name: unsigned
         path: unsigned
 
     - name: Checkout microsoft/digitalworkplace-workflows
-      uses: actions/checkout@v3
+      uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
       with:
         repository: microsoft/digitalworkplace-workflows
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -41,10 +41,10 @@ jobs:
       shell: pwsh
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1
+      uses: NuGet/setup-nuget@296fd3ccf8528660c91106efefe2364482f86d6f # v1.2.0
 
     - name: Azure Login
-      uses: azure/login@v1
+      uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
       with:
         client-id: ${{ secrets.AAD_CLIENT_ID }}
         tenant-id: ${{ secrets.AAD_TENANT_ID }}
@@ -122,7 +122,7 @@ jobs:
       shell: pwsh
 
     - name: Upload Signed Packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3.2.1
       with:
         name: signed
         path: signed
